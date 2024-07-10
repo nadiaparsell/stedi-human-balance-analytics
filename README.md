@@ -25,4 +25,6 @@ This project leverages AWS Glue, AWS S3, Python, and Spark to build a lakehouse 
    - Create a `step_trainer_trusted` table with data from customers who agreed to share their data.
    - Create a `machine_learning_curated` table that aggregates step trainer and accelerometer readings.
 
-## Project Structure
+## Conclusion
+
+This project sets up a data pipeline to process and curate sensor data, enabling accurate real-time step detection through machine learning models.
