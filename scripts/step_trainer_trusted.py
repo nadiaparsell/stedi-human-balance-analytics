@@ -1,3 +1,4 @@
+# Import libraries
 import sys
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
@@ -5,6 +6,7 @@ from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from awsglue.job import Job
 
+# Initialize job parameters
 args = getResolvedOptions(sys.argv, ["JOB_NAME"])
 sc = SparkContext()
 glueContext = GlueContext(sc)
@@ -12,7 +14,7 @@ spark = glueContext.spark_session
 job = Job(glueContext)
 job.init(args["JOB_NAME"], args)
 
-# Script modified for node customer_curated
+# Load customer curated data
 customer_curated_node = glueContext.create_dynamic_frame.from_options(
     format_options={"multiline": False},
     connection_type="s3",
@@ -24,7 +26,7 @@ customer_curated_node = glueContext.create_dynamic_frame.from_options(
     transformation_ctx="customer_curated_node",
 )
 
-# Script generated for node step_trainer_landing
+# Load step trainer landing data
 step_trainer_landing_node = glueContext.create_dynamic_frame.from_options(
     format_options={"multiline": False},
     connection_type="s3",
@@ -36,7 +38,7 @@ step_trainer_landing_node = glueContext.create_dynamic_frame.from_options(
     transformation_ctx="step_trainer_landing_node",
 )
 
-# Script generated for node Join
+# Join step training landing data and customer curated data
 Join_node = Join.apply(
     frame1=step_trainer_landing_node,
     frame2=customer_curated_node,
@@ -45,7 +47,7 @@ Join_node = Join.apply(
     transformation_ctx="Join_node",
 )
 
-# Script generated for node Drop Fields
+# Drop columns not needed
 DropFields_node = DropFields.apply(
     frame=Join_node,
     paths=[
@@ -63,7 +65,7 @@ DropFields_node = DropFields.apply(
     transformation_ctx="DropFields_node",
 )
 
-# Script generated for node S3 bucket
+# Save step trainer trusted data
 S3bucket_node = glueContext.write_dynamic_frame.from_options(
     frame=DropFields_node,
     connection_type="s3",

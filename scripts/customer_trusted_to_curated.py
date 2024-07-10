@@ -1,3 +1,4 @@
+# Import libraries
 import sys
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
@@ -6,6 +7,7 @@ from awsglue.context import GlueContext
 from awsglue.job import Job
 from awsglue.dynamicframe import DynamicFrame
 
+# Initialize job parameters
 args = getResolvedOptions(sys.argv, ["JOB_NAME"])
 sc = SparkContext()
 glueContext = GlueContext(sc)
@@ -13,7 +15,7 @@ spark = glueContext.spark_session
 job = Job(glueContext)
 job.init(args["JOB_NAME"], args)
 
-# Script modified for node customer_trusted
+# Load customer trusted data
 customer_trusted_node = glueContext.create_dynamic_frame.from_options(
     format_options={"multiline": False},
     connection_type="s3",
@@ -25,7 +27,7 @@ customer_trusted_node = glueContext.create_dynamic_frame.from_options(
     transformation_ctx="customer_trusted_node",
 )
 
-# Script modified for node accelerometer_landing
+# Load accelerometer landing data
 accelerometer_landing_node = glueContext.create_dynamic_frame.from_options(
     format_options={"multiline": False},
     connection_type="s3",
@@ -37,7 +39,7 @@ accelerometer_landing_node = glueContext.create_dynamic_frame.from_options(
     transformation_ctx="accelerometer_landing_node",
 )
 
-# Script generated for node Customer Privacy Filter
+# Join accelerometer landing and customer trusted
 CustomerPrivacyFilter_node = Join.apply(
     frame1=accelerometer_landing_node,
     frame2=customer_trusted_node,
@@ -46,24 +48,20 @@ CustomerPrivacyFilter_node = Join.apply(
     transformation_ctx="CustomerPrivacyFilter_node",
 )
 
-# Script generated for node Drop Fields
+# Drop columns not needed
 DropFields_node = DropFields.apply(
     frame=CustomerPrivacyFilter_node,
     paths=["user", "x", "y", "z", "timestamp"],
     transformation_ctx="DropFields_node",
 )
 
-# Convert DynamicFrame to DataFrame to use Spark API
+# Convert DynamicFrame to dataframe so i can drop duplicates
 df = DropFields_node.toDF()
-
-# Drop duplicates
 df = df.dropDuplicates()
-
-# Convert back to DynamicFrame
 DropDuplicates_node = DynamicFrame.fromDF(
     df, glueContext, "DropDuplicates_node")
 
-# Script generated for node S3 bucket
+# Save customer curated data
 S3bucket_node = glueContext.write_dynamic_frame.from_options(
     frame=DropDuplicates_node,
     connection_type="s3",

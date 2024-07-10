@@ -1,3 +1,4 @@
+# Import libraries
 import sys
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
@@ -6,6 +7,7 @@ from awsglue.context import GlueContext
 from awsglue.job import Job
 import re
 
+# Initialize job parameters
 args = getResolvedOptions(sys.argv, ["JOB_NAME"])
 sc = SparkContext()
 glueContext = GlueContext(sc)
@@ -13,7 +15,7 @@ spark = glueContext.spark_session
 job = Job(glueContext)
 job.init(args["JOB_NAME"], args)
 
-# Script generated for node S3 bucket
+# Load customer landing data
 S3bucket_node1 = glueContext.create_dynamic_frame.from_options(
     format_options={"multiline": False},
     connection_type="s3",
@@ -25,14 +27,14 @@ S3bucket_node1 = glueContext.create_dynamic_frame.from_options(
     transformation_ctx="S3bucket_node1",
 )
 
-# Script generated for node PrivacyFilter
+# Only include participants that agreed to share data
 PrivacyFilter_node = Filter.apply(
     frame=S3bucket_node1,
     f=lambda row: (not (row["shareWithResearchAsOfDate"] == 0)),
     transformation_ctx="PrivacyFilter_node",
 )
 
-# Script generated for node Trusted Customer Zone
+# Save customer trusted data
 TrustedCustomerZone_node = glueContext.write_dynamic_frame.from_options(
     frame=PrivacyFilter_node,
     connection_type="s3",

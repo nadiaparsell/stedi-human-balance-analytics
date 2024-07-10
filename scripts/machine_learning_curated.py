@@ -1,3 +1,4 @@
+# Import libraries
 import sys
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
@@ -6,16 +7,16 @@ from awsglue.context import GlueContext
 from awsglue.job import Job
 from awsglue.dynamicframe import DynamicFrame
 
+# Initialize job parameters
 # @params: [JOB_NAME]
 args = getResolvedOptions(sys.argv, ['JOB_NAME'])
-
 sc = SparkContext()
 glueContext = GlueContext(sc)
 spark = glueContext.spark_session
 job = Job(glueContext)
 job.init(args['JOB_NAME'], args)
 
-# Load accelerometer data into DataFrame
+# Load accelerometer trusted data
 accelerometer_trusted_node = glueContext.create_dynamic_frame.from_options(
     format_options={"multiline": False},
     connection_type="s3",
@@ -27,7 +28,7 @@ accelerometer_trusted_node = glueContext.create_dynamic_frame.from_options(
     transformation_ctx="accelerometer_trusted_node",
 ).toDF()
 
-# Load step trainer data into DataFrame
+# Load step trainer data
 step_trainer_trusted_node = glueContext.create_dynamic_frame.from_options(
     format_options={"multiline": False},
     connection_type="s3",
@@ -39,11 +40,9 @@ step_trainer_trusted_node = glueContext.create_dynamic_frame.from_options(
     transformation_ctx="step_trainer_trusted_node",
 ).toDF()
 
-# Register the DataFrames as temporary views
+# Join using SQL
 accelerometer_trusted_node.createOrReplaceTempView("accelerometer_trusted")
 step_trainer_trusted_node.createOrReplaceTempView("step_trainer_trusted")
-
-# Perform the SQL join operation
 joined_df = spark.sql("""
 SELECT * 
 FROM accelerometer_trusted 
@@ -51,15 +50,14 @@ JOIN step_trainer_trusted
 ON accelerometer_trusted.timestamp = step_trainer_trusted.sensorreadingtime
 """)
 
-# Drop unnecessary fields if required (example here: 'user')
+# Drop columns not needed and convert back to DynamicFrame
 joined_df = joined_df.drop("user")
 
-# Convert the joined DataFrame back to a DynamicFrame
 joined_dynamic_frame = DynamicFrame.fromDF(
     joined_df, glueContext, "joined_dynamic_frame")
 
-# Write the result to S3
-glueContext.write_dynamic_frame.from_options(
+# Save machine learning curated data
+S3bucket_node = glueContext.write_dynamic_frame.from_options(
     frame=joined_dynamic_frame,
     connection_type="s3",
     format="json",
