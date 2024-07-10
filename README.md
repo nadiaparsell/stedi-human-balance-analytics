@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project leverages AWS Glue, AWS S3, Python, and Spark to build a lakehouse solution for the STEDI Step Trainer. The solution processes and curates sensor data to support machine learning models that accurately detect steps.
+This project leverages AWS Glue, AWS S3, Athena, IAM roles, VPC gateway, Python, Spark, SQL, and etc to build a lakehouse solution for the STEDI Step Trainer. The solution processes and curates sensor data to support machine learning models that accurately detect steps.
 
 ## Key Requirements
 
