@@ -39,9 +39,11 @@ TrustedCustomerZone_node = glueContext.write_dynamic_frame.from_options(
     frame=PrivacyFilter_node,
     connection_type="s3",
     format="json",
+    updateBehavior="UPDATE_IN_DATABASE",
+    partitionKeys=[],
+    enableUpdateCatalog=True,
     connection_options={
         "path": "s3://stedi-lake-house-nadia2/customer/trusted2/",
-        "partitionKeys": [],
     },
     transformation_ctx="TrustedCustomerZone_node",
 )

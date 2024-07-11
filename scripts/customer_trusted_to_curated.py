@@ -66,9 +66,11 @@ S3bucket_node = glueContext.write_dynamic_frame.from_options(
     frame=DropDuplicates_node,
     connection_type="s3",
     format="json",
+    updateBehavior="UPDATE_IN_DATABASE",
+    partitionKeys=[],
+    enableUpdateCatalog=True,
     connection_options={
         "path": "s3://stedi-lake-house-nadia2/customer/curated/",
-        "partitionKeys": [],
     },
     transformation_ctx="S3bucket_node",
 )
